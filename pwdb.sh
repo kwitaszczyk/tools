@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2018 Konrad Witaszczyk <def@FreeBSD.org>
+# Copyright (c) 2018-2019 Konrad Witaszczyk <def@FreeBSD.org>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -50,7 +50,14 @@ pwdb_read()
 
 pwdb_write()
 {
-	gpg --encrypt --recipient "${PWDB_ID}" --output "${PWDB_PATH}.new"
+	local recipient recipients
+
+	recipients=""
+	for recipient in ${PWDB_IDS}; do
+		recipients="${recipients} --recipient ${recipient}"
+	done
+
+	gpg --encrypt ${recipients} --output "${PWDB_PATH}.new"
 	[ $? -eq 0 ] || die "GnuPG returned invalid value."
 	mv "${PWDB_PATH}.new" "${PWDB_PATH}"
 }
@@ -134,29 +141,34 @@ pwdb_list()
 	pwdb_read | sed -n 's/^\(.*\):.*$/\1/p' | sort
 }
 
-[ -n "${PWDB_ID}" ] || die "Missing identity."
-[ -f "${PWDB_PATH}" ] || die "Missing database file."
+main()
+{
+	[ -n "${PWDB_IDS}" ] || die "Missing identities."
+	[ -f "${PWDB_PATH}" ] || die "Missing database file."
 
-case "$1" in
-"add")
-	pwdb_add "$2"
-	;;
-"del")
-	pwdb_del "$2"
-	;;
-"gen")
-	pwdb_gen
-	;;
-"get")
-	pwdb_get "$2"
-	;;
-"list")
-	pwdb_list
-	;;
-"show")
-	pwdb_show "$2"
-	;;
-*)
-	usage
-	;;
-esac
+	case "$1" in
+	"add")
+		pwdb_add "$2"
+		;;
+	"del")
+		pwdb_del "$2"
+		;;
+	"gen")
+		pwdb_gen
+		;;
+	"get")
+		pwdb_get "$2"
+		;;
+	"list")
+		pwdb_list
+		;;
+	"show")
+		pwdb_show "$2"
+		;;
+	*)
+		usage
+		;;
+	esac
+}
+
+main "${@}"
