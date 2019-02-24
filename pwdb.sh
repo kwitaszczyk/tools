@@ -29,6 +29,7 @@ usage()
 	echo "usage: pwdb command args ..."
 	echo
 	echo "	add <name>"
+	echo "	store <name>"
 	echo "	del <name>"
 	echo "	gen"
 	echo "	get <name>"
@@ -126,6 +127,22 @@ pwdb_add()
 	echo "${password}" | pwdb_clip
 }
 
+pwdb_store()
+{
+	local name password
+
+	name="$1"
+	[ -n "${name}" ] || die "Missing name."
+
+	echo -n "Enter your password: "
+	stty -echo
+	read password
+	stty echo
+	echo
+
+	(pwdb_read && echo "${name}:${password}") | pwdb_write || exit 1
+}
+
 pwdb_del()
 {
 	local name
@@ -149,6 +166,9 @@ main()
 	case "$1" in
 	"add")
 		pwdb_add "$2"
+		;;
+	"store")
+		pwdb_store "$2"
 		;;
 	"del")
 		pwdb_del "$2"
